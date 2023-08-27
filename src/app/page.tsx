@@ -12,6 +12,7 @@ import { UserList } from "@/components/UserList";
 export default function Home() {
 
   const [users, setUsers] = useState<IUser[] | null>(null);
+  const [editUser, setEditUser] = useState<IUser | null>(null);
 
   useEffect(() => {
     const getUsers = async () => {
@@ -33,8 +34,8 @@ export default function Home() {
           <Image width={40} height={40} src="/firebase_28dp.png" alt="logo" className="w-10 h-10 object-contain" />
         </div>
         <div className="flex flex-col md:flex-row justify-center gap-8 w-full">
-          <Form users={users!} setUsers={setUsers}/>
-          <UserList users={users!} />
+          <Form users={users!} setUsers={setUsers} editUser={editUser!} setEditUser={setEditUser} />
+          <UserList users={users!} setUsers={setUsers} setEditUser={setEditUser} />
         </div>
       </div>
     </main>

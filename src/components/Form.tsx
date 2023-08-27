@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent, FormEvent, SetStateAction, Dispatch } from "react";
+import { useState, ChangeEvent, FormEvent, SetStateAction, Dispatch, useEffect } from "react";
 
 import { db } from "@/firebase/firebaseConfig";
 
@@ -12,6 +12,8 @@ import { Message } from "./Message";
 interface Props {
   users: IUser[];
   setUsers: Dispatch<SetStateAction<IUser[] | null>>;
+  editUser: IUser;
+  setEditUser: Dispatch<SetStateAction<IUser | null>>
 }
 
 const INITAL_VALUE: IUser = {
@@ -25,11 +27,17 @@ const INITIAL_SUBMIT: ISubmitState = {
   message: ""
 }
 
-export const Form = ({ users, setUsers }: Props) => {
+export const Form = ({ users, setUsers, editUser, setEditUser }: Props) => {
 
   const [formData, setFormDate] = useState<IUser>(INITAL_VALUE);
   const [submitState, setSubmitState] = useState<ISubmitState>(INITIAL_SUBMIT);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if(editUser) {
+      setFormDate(editUser);
+    }
+  }, [editUser]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormDate({
@@ -68,9 +76,9 @@ export const Form = ({ users, setUsers }: Props) => {
     }
 
     try {
-      await addDoc(collection(db, "users"), newUser);
+      const user = await addDoc(collection(db, "users"), newUser);
 
-      setUsers([...users, { name: newUser.name, email: newUser.email, role: newUser.role }]);
+      setUsers([...users, { id: user.id, name: newUser.name, email: newUser.email, role: newUser.role }]);
 
       setLoading(false);
       setFormDate(INITAL_VALUE);
@@ -94,7 +102,7 @@ export const Form = ({ users, setUsers }: Props) => {
       onSubmit={handleSubmit}
       className='md:max-w-md w-full h-max p-10 border border-zinc-800 rounded-lg'
     >
-      <h2 className="mb-6 text-xl text-zinc-200 font-semibold">Registro de usuarios</h2>
+      <h2 className="mb-6 text-xl text-zinc-200 font-semibold">{ editUser ? "Edit user" : "Register user" }</h2>
       {
         submitState.state !== "" && (
           <div className="w-full mb-4">
@@ -129,7 +137,7 @@ export const Form = ({ users, setUsers }: Props) => {
           onChange={handleChange}
           type="email"
           placeholder='email@email.com'
-          className='w-full px-4 py-2 border border-zinc-800 bg-zinc-900 rounded-lg placeholder:text-zinc-600 text-zinc-500 outline outline-transparent focus-visible:outline-zinc-500'
+          className='read-only:bg-gray-100 w-full px-4 py-2 border border-zinc-800 bg-zinc-900 rounded-lg placeholder:text-zinc-600 text-zinc-500 outline outline-transparent focus-visible:outline-zinc-500'
         />
       </div>
       <div className="w-full mb-6">
@@ -138,6 +146,7 @@ export const Form = ({ users, setUsers }: Props) => {
           className="block text-zinc-400 mb-2"
         >Password</label>
         <input
+          disabled={ editUser ? true : false }
           id='password'
           name="password"
           value={formData.password}
@@ -162,7 +171,7 @@ export const Form = ({ users, setUsers }: Props) => {
               type="submit"
               className="w-full px-6 py-4 bg-yellow-500 hover:bg-yellow-400 rounded-lg text-zinc-800 uppercase text-sm font-semibold transition-all"
             >
-              Register user
+              { editUser ? "Save changes" : "Register user" }
             </button>
           )
         }

@@ -1,24 +1,28 @@
 
 import { IUser } from "@/interfaces/user";
 import { User } from "./User";
+import { Dispatch, SetStateAction } from "react";
 
 interface Props {
   users: IUser[];
+  setUsers: Dispatch<SetStateAction<IUser[] | null>>
+  setEditUser: Dispatch<SetStateAction<IUser | null>>
 }
 
-export const UserList = ({ users }: Props) => {
+export const UserList = ({ users, setUsers, setEditUser }: Props) => {
 
   return (
-    <div className='flex flex-col gap-2 md:max-w-xl w-full p-4 border border-zinc-800 rounded-lg'>
+    <div className='flex flex-col gap-2 md:max-w-xl w-full h-max p-4 border border-zinc-800 rounded-lg'>
       {
         users ? (
           users.length > 0 ? (
-            users.map((user: any, index) => (
+            users.map((user: IUser) => (
               <User
-                key={index}
-                name={user.name}
-                email={user.email}
-                role={user.role}
+                key={user.id}
+                user={user}
+                users={users}
+                setUsers={setUsers}
+                setEditUser={setEditUser}
               />
             ))
           ) : (
