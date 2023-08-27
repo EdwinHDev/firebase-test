@@ -4,7 +4,7 @@ import { useState, ChangeEvent, FormEvent, SetStateAction, Dispatch, useEffect }
 
 import { db } from "@/firebase/firebaseConfig";
 
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, doc, runTransaction } from "firebase/firestore";
 import { IUser } from "@/interfaces/user";
 import { ISubmitState } from "@/interfaces/submitState";
 import { Message } from "./Message";
@@ -34,7 +34,7 @@ export const Form = ({ users, setUsers, editUser, setEditUser }: Props) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if(editUser) {
+    if (editUser) {
       setFormDate(editUser);
     }
   }, [editUser]);
@@ -54,11 +54,71 @@ export const Form = ({ users, setUsers, editUser, setEditUser }: Props) => {
     // validations
     const { name, email, password } = formData;
 
+
+    if (editUser) {
+      if ([name, email].includes("")) {
+        setLoading(false);
+        setSubmitState({
+          state: "error",
+          message: "The name and email are required"
+        });
+
+        setTimeout(() => {
+          setSubmitState(INITIAL_SUBMIT);
+        }, 3000);
+
+        return;
+      }
+
+      const sfDocRef = doc(db, "users", editUser.id!);
+
+      try {
+        await runTransaction(db, async (transaction) => {
+          const sfDoc = await transaction.get(sfDocRef);
+          if (!sfDoc.exists()) {
+            setLoading(false);
+            throw "Document does not exist!";
+          }
+
+          const updateName = sfDoc.data().name = name;
+          const updateEmail = sfDoc.data().email = email;
+          transaction.update(sfDocRef, { name: updateName, email: updateEmail });
+        });
+        // console.log("Transaction successfully committed!");
+        const updateUsersList = users.map(user => user.id === editUser.id ? {...user, name: name, email: email} : user);
+        setUsers(updateUsersList);
+        setLoading(false);
+        setEditUser(null);
+        setFormDate(INITAL_VALUE);
+        setSubmitState({
+          state: "sucess",
+          message: `User updated successfully`
+        });
+
+        setTimeout(() => {
+          setSubmitState(INITIAL_SUBMIT);
+        }, 3000);
+      } catch (e) {
+        console.log("Transaction failed: ", e);
+        setLoading(false);
+        setSubmitState({
+          state: "error",
+          message: `Transaction failed: ${e}`
+        });
+
+        setTimeout(() => {
+          setSubmitState(INITIAL_SUBMIT);
+        }, 3000);
+      }
+
+      return;
+    }
+
     if ([name, email, password].includes("")) {
       setLoading(false);
       setSubmitState({
         state: "error",
-        message: "Todos los campos son obligatorios"
+        message: "All fields are required"
       });
 
       setTimeout(() => {
@@ -85,7 +145,7 @@ export const Form = ({ users, setUsers, editUser, setEditUser }: Props) => {
 
       setSubmitState({
         state: "sucess",
-        message: `El usuario ${name} se creo`
+        message: `The user ${name} was created`
       });
 
       setTimeout(() => {
@@ -102,7 +162,7 @@ export const Form = ({ users, setUsers, editUser, setEditUser }: Props) => {
       onSubmit={handleSubmit}
       className='md:max-w-md w-full h-max p-10 border border-zinc-800 rounded-lg'
     >
-      <h2 className="mb-6 text-xl text-zinc-200 font-semibold">{ editUser ? "Edit user" : "Register user" }</h2>
+      <h2 className="mb-6 text-xl text-zinc-200 font-semibold">{editUser ? "Edit user" : "Register user"}</h2>
       {
         submitState.state !== "" && (
           <div className="w-full mb-4">
@@ -146,14 +206,14 @@ export const Form = ({ users, setUsers, editUser, setEditUser }: Props) => {
           className="block text-zinc-400 mb-2"
         >Password</label>
         <input
-          disabled={ editUser ? true : false }
+          disabled={editUser ? true : false}
           id='password'
           name="password"
-          value={formData.password}
+          value={editUser ? "" : formData.password}
           onChange={handleChange}
           type="password"
           placeholder='password'
-          className='w-full px-4 py-2 border border-zinc-800 bg-zinc-900 rounded-lg placeholder:text-zinc-600 text-zinc-500 outline outline-transparent focus-visible:outline-zinc-500'
+          className={`w-full px-4 py-2 border border-zinc-800 ${editUser ? "bg-zinc-950 cursor-not-allowed" : "bg-zinc-900"} rounded-lg placeholder:text-zinc-600 text-zinc-500 outline outline-transparent focus-visible:outline-zinc-500`}
         />
       </div>
       <div className="w-full flex justify-end">
@@ -171,7 +231,7 @@ export const Form = ({ users, setUsers, editUser, setEditUser }: Props) => {
               type="submit"
               className="w-full px-6 py-4 bg-yellow-500 hover:bg-yellow-400 rounded-lg text-zinc-800 uppercase text-sm font-semibold transition-all"
             >
-              { editUser ? "Save changes" : "Register user" }
+              {editUser ? "Save changes" : "Register user"}
             </button>
           )
         }
