@@ -28,7 +28,7 @@ export default function Home() {
 
   return (
     <main className="flex flex-col items-center justify-between relative">
-      <div className="container mx-auto flex flex-col justify-center items-center min-h-screen px-4">
+      <div className="container mx-auto flex flex-col justify-center items-center min-h-[100vh-56px] px-4">
         <div className="flex justify-center items-center gap-2 my-10 w-full">
           <h1 className="text-4xl text-zinc-100">CRUD with <span className="font-bold">Firebase</span></h1>
           <Image width={40} height={40} src="/firebase_28dp.png" alt="logo" className="w-10 h-10 object-contain" />

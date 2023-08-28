@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent, FormEvent, SetStateAction, Dispatch, useEffect } from "react";
+import { useState, ChangeEvent, FormEvent, SetStateAction, Dispatch, useEffect, useRef } from "react";
 
 import { db } from "@/firebase/firebaseConfig";
 
@@ -29,6 +29,8 @@ const INITIAL_SUBMIT: ISubmitState = {
 
 export const Form = ({ users, setUsers, editUser, setEditUser }: Props) => {
 
+  const nameRef = useRef<HTMLInputElement | null>(null);
+
   const [formData, setFormDate] = useState<IUser>(INITAL_VALUE);
   const [submitState, setSubmitState] = useState<ISubmitState>(INITIAL_SUBMIT);
   const [loading, setLoading] = useState(false);
@@ -36,6 +38,7 @@ export const Form = ({ users, setUsers, editUser, setEditUser }: Props) => {
   useEffect(() => {
     if (editUser) {
       setFormDate(editUser);
+      nameRef.current?.focus();
     }
   }, [editUser]);
 
@@ -162,7 +165,7 @@ export const Form = ({ users, setUsers, editUser, setEditUser }: Props) => {
       onSubmit={handleSubmit}
       className='md:max-w-md w-full h-max p-10 border border-zinc-800 rounded-lg'
     >
-      <h2 className="mb-6 text-xl text-zinc-200 font-semibold">{editUser ? "Edit user" : "Register user"}</h2>
+      <h2 className="mb-6 text-xl text-zinc-200 font-semibold">{editUser ? "Edit user" : "Sign Up"}</h2>
       {
         submitState.state !== "" && (
           <div className="w-full mb-4">
@@ -176,6 +179,7 @@ export const Form = ({ users, setUsers, editUser, setEditUser }: Props) => {
           className="block text-zinc-400 mb-2"
         >Full name</label>
         <input
+          ref={nameRef}
           id='name'
           name="name"
           value={formData.name}
